@@ -1,5 +1,7 @@
 # PathSafeAssemblyQC
 
+NOTE: THIS REPOSITORY IS STILL UNDER DEVELOPMENT!
+
 Running the pathsafeQC pipeline requires two singularity sandbox containers to be created. Assuming singularity is installed these can be created using the commands below. Note it will take  some time (a couple of hours) to create the sandboxes and install all dependencies specified in the definition files "pathsafeQC_container1.def" and "pathsafeQC_container2.def". Both sandboxes will run Ubuntu 20.04 as the underlying OS.
 
 ```
