@@ -1,0 +1,67 @@
+BootStrap: docker
+From: ubuntu:20.04
+
+%runscript
+exec "$@"
+
+%environment
+PATH=/bin/MaSuRCA-4.0.9/bin:$PATH
+PATH=/bin/SKESA:$PATH
+PATH=/bin/abyss/build:$PATH
+
+%post
+#Prevent interactive prompts during build
+export DEBIAN_FRONTEND=noninteractive
+
+apt update -y
+apt install -y software-properties-common
+ln -s /bin/python3.8 /bin/python
+apt-get install -y \
+    build-essential g++ \
+    python3-dev \
+    autotools-dev \
+    libicu-dev \
+    libbz2-dev \
+    libboost-all-dev \
+    python3-pip \
+    cmake \
+    git \
+    wget \
+    zip \
+    curl \
+    default-jre \
+    libsparsehash-dev \
+    ncbi-blast+ \
+    bioperl \
+    perl \
+    zlib1g-dev \
+    texlive-latex-base \
+    liblzma-dev
+
+export LC_ALL=C
+
+# Install boost
+cd /bin
+wget https://boostorg.jfrog.io/artifactory/main/release/1.80.0/source/boost_1_80_0.tar.gz
+tar xvf boost_1_80_0.tar.gz
+rm boost_1_80_0.tar.gz
+cd boost_1_80_0
+./bootstrap.sh --prefix=/usr/
+./b2 install
+
+#Install Skesa
+cd /bin
+git clone https://github.com/ncbi/SKESA
+cd SKESA
+make -f Makefile.nongs BOOST_PATH=/usr/include/boost
+
+#Install masurca
+cd /bin
+wget https://github.com/alekseyzimin/masurca/releases/download/v4.0.9/MaSuRCA-4.0.9.tar.gz
+tar -xvzf MaSuRCA-4.0.9.tar.gz
+cd MaSuRCA-4.0.9
+sed -i 's/ && cp -a \.\.\/Flye \$DEST//g' install.sh
+./install.sh
+
+unset DEBIAN_FRONTEN
+

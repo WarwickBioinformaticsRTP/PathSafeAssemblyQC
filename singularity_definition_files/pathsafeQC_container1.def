@@ -1,0 +1,70 @@
+BootStrap: docker
+From: ubuntu:20.04
+
+%runscript
+exec "$@"
+
+%environment
+PATH=/bin/velvet:$PATH
+PATH=/bin/velvet/contrib/estimate-exp_cov:$PATH
+PATH=/bin/velvet/VelvetOptimiser:$PATH
+PATH=/bin/EToKi:$PATH
+PATH=/bin/Unicycler:$PATH
+PATH=/bin/idba/bin:$PATH
+PATH=/bin/miniconda3/bin:$PATH
+PATH=/bin/EToKi/externals:$PATH
+PATH=/bin/EToKi/externals/SPAdes-3.15.2-Linux/bin:$PATH
+
+%post
+#Prevent interactive prompts during build
+export DEBIAN_FRONTEND=noninteractive
+
+#Install dependencies
+apt-get update
+apt-get upgrade -y
+apt-get install -y bioperl perl
+apt-get install -y build-essential g++ wget git libz-dev curl \
+liblzma-dev libbz2-dev default-jre curl ncbi-blast+ libsparsehash-dev \
+python3-distutils python3-apt
+
+#Install pip
+ln -s /bin/python3.8 /bin/python
+cd /bin
+curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+python3.8 get-pip.py
+
+#Install quast and other required python libraries
+pip install quast ete3 numpy==1.20.3 pandas scikit-learn psutil numba --ignore-installed
+
+# Install EtoKI (will also install assemblers: spades and megahit)
+cd /bin
+wget https://www.drive5.com/downloads/usearch11.0.667_i86linux32.gz
+gunzip usearch11.0.667_i86linux32.gz
+chmod +x usearch11.0.667_i86linux32
+git clone https://github.com/NigelDyer/EToKi.git
+cd EToKi
+git checkout Warwick
+git pull origin Warwick
+python3.8 EToKi.py configure --install --download_krakenDB --usearch /bin/usearch11.0.667_i86linux32
+
+#Install Unicycler
+cd /bin
+git clone https://github.com/rrwick/Unicycler.git
+cd Unicycler
+python3.8 setup.py install
+
+# Install idba (update max length prior to build)
+cd /bin
+git clone https://github.com/loneknightpy/idba
+cd idba
+sed -i 's/kMaxShortSequence = 128/kMaxShortSequence = 250/g' src/sequence/short_sequence.h
+./build.sh
+
+#Install velvet and velvet optimiser
+cd /bin
+git clone https://github.com/dzerbino/velvet
+cd velvet
+make 'MAXKMERLENGTH=127'
+git clone https://github.com/tseemann/VelvetOptimiser
+
+unset DEBIAN_FRONTEND
